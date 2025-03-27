@@ -7,8 +7,12 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * This rest controller is only for the internal server side testing/monitoring purpose.
+ * Do not expose to the client.
+ */
 @RestController
-@RequestMapping("/stations")
+@RequestMapping("/internal/stations")
 public class ChargingStationController {
 
     @Autowired
