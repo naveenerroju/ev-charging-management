@@ -2,9 +2,9 @@ package com.naveen.evcharging.charger_management.websocket;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.naveen.evcharging.charger_management.entity.ChargingStation;
-import com.naveen.evcharging.charger_management.repository.ChargingStationRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.naveen.evcharging.charger_management.service.ActionHandler;
+import com.naveen.evcharging.charger_management.util.DataExchangeUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
@@ -12,64 +12,56 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
+@Slf4j
 public class ChargerWebSocketHandler extends TextWebSocketHandler {
 
-    private final Map<String, WebSocketSession> chargingStationSessions = new ConcurrentHashMap<>();
-    private final ObjectMapper objectMapper = new ObjectMapper();
-    @Autowired
-    private ChargingStationRepository repository;
+    //This acts like cache. Later, we can move this implementation to cache management
+    private final Map<String, WebSocketSession> chargerSessions = new ConcurrentHashMap<>();
 
-    @Override
-    public void afterConnectionEstablished(WebSocketSession session) {
-        String chargingStationId = getchargingStationIdFromPath(session);
-        chargingStationSessions.put(chargingStationId, session);
-        System.out.println("chargingStation connected: " + chargingStationId);
+    private final ActionHandlerFactory actionHandlerFactory;
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    public ChargerWebSocketHandler(ActionHandlerFactory actionHandlerFactory) {
+        this.actionHandlerFactory = actionHandlerFactory;
     }
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws IOException {
-        String chargingStationId = getchargingStationIdFromPath(session);
+        String chargerId = DataExchangeUtil.getchargingStationIdFromPath(session);
         JsonNode root = objectMapper.readTree(message.getPayload());
 
         String action = root.path("action").asText();
+        String messageId = root.path("messageId").asText();
 
-        if ("BootNotification".equalsIgnoreCase(action)) {
-            JsonNode payload = root.path("payload");
+        log.info("New message received from {} for action: {}. messageId: {}", chargerId, action, messageId);
 
-            ChargingStation chargingStation = new ChargingStation();
-            chargingStation.setId(chargingStationId);
-            chargingStation.setVendor(payload.path("chargePointVendor").asText("UnknownVendor"));
-            chargingStation.setModel(payload.path("chargePointModel").asText("UnknownModel"));
-            chargingStation.setStatus("Available");
-            chargingStation.setRegisteredAt(LocalDateTime.now());
-            chargingStation.setLastHeartbeat(LocalDateTime.now());
-            chargingStation.setLastStatusNotification(LocalDateTime.now());
+        ActionHandler handler = actionHandlerFactory.getHandler(action);
 
-            ChargingStation savedchargingStation = repository.save(chargingStation);
-
-            // Respond with the document ID
-            String response = String.format("{\"status\": \"Registered\", \"id\": \"%s\"}", savedchargingStation.getId());
-            session.sendMessage(new TextMessage(response));
+        if (handler != null) {
+            String actionStatus = handler.handle(chargerId, root.path("payload"));
+            TextMessage response = DataExchangeUtil.sendOcppResponse(action, messageId, actionStatus);
+            session.sendMessage(response);
         } else {
-            session.sendMessage(new TextMessage("{\"status\": \"Unsupported action\"}"));
+            session.sendMessage(new TextMessage("{\"status\": \"Error\", \"message\": \"Unsupported action\"}"));
         }
     }
 
-    private String getchargingStationIdFromPath(WebSocketSession session) {
-        String path = session.getUri().getPath(); // /ws/chargingStation/chargingStation_001
-        return path.substring(path.lastIndexOf("/") + 1);
+    @Override
+    public void afterConnectionEstablished(WebSocketSession session) {
+        String chargerId = DataExchangeUtil.getchargingStationIdFromPath(session);
+        chargerSessions.put(chargerId, session);
+        log.info("New connection is established with {}", chargerId);
     }
 
     @Override
-    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
-        String chargingStationId = getchargingStationIdFromPath(session);
-        chargingStationSessions.remove(chargingStationId);
-        System.out.println("chargingStation disconnected: " + chargingStationId);
+    public void afterConnectionClosed(WebSocketSession session, CloseStatus status){
+        String chargerId = DataExchangeUtil.getchargingStationIdFromPath(session);
+        chargerSessions.put(chargerId, session);
+        log.info("Connection is closed with {}", chargerId);
     }
 
 }
