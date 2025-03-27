@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.naveen.evcharging.charger_management.entity.ChargingStation;
 import com.naveen.evcharging.charger_management.exception.InvalidInputException;
+import com.naveen.evcharging.charger_management.model.ServerResponse;
 import com.naveen.evcharging.charger_management.repository.ChargingStationRepository;
 import org.springframework.stereotype.Service;
 
@@ -20,7 +21,7 @@ public class BootNotificationHandler implements ActionHandler{
     }
 
     @Override
-    public String handle(String chargerId, JsonNode payload) {
+    public ServerResponse handle(String chargerId, JsonNode payload) {
 
         // Validate the required fields: vendor and model
         String vendor = payload.path("chargePointVendor").asText(null);
@@ -39,8 +40,8 @@ public class BootNotificationHandler implements ActionHandler{
             return newCharger;
         });
 
-        charger.setVendor(payload.path("chargePointVendor").asText("UnknownVendor"));
-        charger.setModel(payload.path("chargePointModel").asText("UnknownModel"));
+        charger.setVendor(vendor);
+        charger.setModel(model);
         charger.setLastHeartbeat(currentTime);
         charger.setStatus(status);
         charger.setLastStatusNotification(currentTime);
@@ -48,7 +49,6 @@ public class BootNotificationHandler implements ActionHandler{
         chargerRepository.save(charger);
 
         // Return the OCPP formatted response
-        return String.format("{\"status\": \"Accepted\", \"currentTime\": \"%s\", \"interval\": 10}",
-                currentTime);
+        return new ServerResponse("Accepted", LocalDateTime.now());
     }
 }

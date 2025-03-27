@@ -2,6 +2,9 @@ package com.naveen.evcharging.charger_management.websocket;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.naveen.evcharging.charger_management.exception.InvalidInputException;
+import com.naveen.evcharging.charger_management.exception.WebSocketExceptionHandler;
+import com.naveen.evcharging.charger_management.model.ServerResponse;
 import com.naveen.evcharging.charger_management.service.ActionHandler;
 import com.naveen.evcharging.charger_management.util.DataExchangeUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -23,10 +26,12 @@ public class ChargerWebSocketHandler extends TextWebSocketHandler {
     private final Map<String, WebSocketSession> chargerSessions = new ConcurrentHashMap<>();
 
     private final ActionHandlerFactory actionHandlerFactory;
+    private final WebSocketExceptionHandler webSocketExceptionHandler;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public ChargerWebSocketHandler(ActionHandlerFactory actionHandlerFactory) {
+    public ChargerWebSocketHandler(ActionHandlerFactory actionHandlerFactory, WebSocketExceptionHandler webSocketExceptionHandler) {
         this.actionHandlerFactory = actionHandlerFactory;
+        this.webSocketExceptionHandler = webSocketExceptionHandler;
     }
 
     @Override
@@ -42,11 +47,19 @@ public class ChargerWebSocketHandler extends TextWebSocketHandler {
         ActionHandler handler = actionHandlerFactory.getHandler(action);
 
         if (handler != null) {
-            String actionStatus = handler.handle(chargerId, root.path("payload"));
-            TextMessage response = DataExchangeUtil.sendOcppResponse(action, messageId, actionStatus);
-            session.sendMessage(response);
+
+            try{
+                ServerResponse actionStatus = handler.handle(chargerId, root.path("payload"));
+                TextMessage response = DataExchangeUtil.sendOcppResponse(action, messageId, DataExchangeUtil.convertObjectToJsonString(actionStatus));
+                session.sendMessage(response);
+            } catch (InvalidInputException ex){
+                webSocketExceptionHandler.handleInvalidInputException(session, ex);
+            } catch (RuntimeException ex){
+                webSocketExceptionHandler.handleGenericException(session, ex);
+            }
+
         } else {
-            session.sendMessage(new TextMessage("{\"status\": \"Error\", \"message\": \"Unsupported action\"}"));
+            throw new InvalidInputException("Invalid Action received");
         }
     }
 
