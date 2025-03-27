@@ -2,8 +2,12 @@ package com.naveen.evcharging.charger_management.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.naveen.evcharging.charger_management.entity.ChargingStation;
+import com.naveen.evcharging.charger_management.exception.InvalidInputException;
+import com.naveen.evcharging.charger_management.model.ServerResponse;
 import com.naveen.evcharging.charger_management.repository.ChargingStationRepository;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
 
 @Service
 public class HeartbeatHandler implements ActionHandler{
@@ -14,14 +18,18 @@ public class HeartbeatHandler implements ActionHandler{
     }
 
     @Override
-    public String handle(String chargerId, JsonNode payload) {
+    public ServerResponse handle(String chargerId, JsonNode payload) {
+        // Handle the Heartbeat: Update the lastHeartbeat timestamp for the charger
         ChargingStation charger = chargerRepository.findById(chargerId).orElse(null);
         if (charger != null) {
+            // Update the heartbeat timestamp
             charger.setLastHeartbeat(java.time.LocalDateTime.now());
             chargerRepository.save(charger);
-            return String.format("{\"status\": \"Heartbeat received\", \"id\": \"%s\"}", chargerId);
+
+            // Return the response in OCPP 1.6 format
+            return new ServerResponse("Accepted", LocalDateTime.now());
         } else {
-            return "{\"status\": \"Error\", \"message\": \"Charger not found\"}";
+            throw new InvalidInputException("Charger ID doesn't exist");
         }
     }
 }
