@@ -23,6 +23,7 @@ public class BootNotificationHandler implements ActionHandler{
         // Validate the required fields: vendor and model
         String vendor = payload.path("chargePointVendor").asText(null);
         String model = payload.path("chargePointModel").asText(null);
+        String status = payload.path("status").asText(null);
 
         if (vendor == null || model == null) {
             throw new InvalidInputException("Both chargePointVendor and chargePointModel are required.");
@@ -36,8 +37,8 @@ public class BootNotificationHandler implements ActionHandler{
 
         charger.setVendor(payload.path("chargePointVendor").asText("UnknownVendor"));
         charger.setModel(payload.path("chargePointModel").asText("UnknownModel"));
-        charger.setStatus("Available");
         charger.setLastHeartbeat(java.time.LocalDateTime.now());
+        charger.setStatus(status);
         charger.setLastStatusNotification(java.time.LocalDateTime.now());
 
         chargerRepository.save(charger);
