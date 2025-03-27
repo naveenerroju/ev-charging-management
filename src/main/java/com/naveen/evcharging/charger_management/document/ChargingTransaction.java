@@ -20,13 +20,12 @@ public class ChargingTransaction {
     @Id
     private String id;
     @NotBlank(message = "Charging station Id cannot be null")
-    private String stationId;
+    private String chargerId;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private double energyConsumed;  // in kWh
     private double cost;  // in currency
     @NotBlank(message = "Status cannot be null")
     private String status;
-    private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
