@@ -15,11 +15,15 @@ public class HeartbeatHandler implements ActionHandler{
 
     @Override
     public String handle(String chargerId, JsonNode payload) {
+        // Handle the Heartbeat: Update the lastHeartbeat timestamp for the charger
         ChargingStation charger = chargerRepository.findById(chargerId).orElse(null);
         if (charger != null) {
+            // Update the heartbeat timestamp
             charger.setLastHeartbeat(java.time.LocalDateTime.now());
             chargerRepository.save(charger);
-            return String.format("{\"status\": \"Heartbeat received\", \"id\": \"%s\"}", chargerId);
+
+            // Return the response in OCPP 1.6 format
+            return String.format("{\"status\": \"Accepted\", \"currentTime\": \"%s\"}", java.time.LocalDateTime.now().toString());
         } else {
             return "{\"status\": \"Error\", \"message\": \"Charger not found\"}";
         }
