@@ -40,8 +40,10 @@ public class BootNotificationHandler implements ActionHandler{
         charger.setLastHeartbeat(java.time.LocalDateTime.now());
         charger.setLastStatusNotification(java.time.LocalDateTime.now());
 
-        ChargingStation savedCharger = chargerRepository.save(charger);
+        chargerRepository.save(charger);
 
-        return String.format("{\"status\": \"Registered\", \"id\": \"%s\"}", savedCharger.getId());
+        // Return the OCPP formatted response
+        return String.format("{\"status\": \"Accepted\", \"currentTime\": \"%s\", \"interval\": 10}",
+                java.time.LocalDateTime.now());
     }
 }

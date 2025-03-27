@@ -19,6 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class ChargerWebSocketHandler extends TextWebSocketHandler {
 
+    //This acts like cache. Later, we can move this implementation to cache management
     private final Map<String, WebSocketSession> chargerSessions = new ConcurrentHashMap<>();
 
     private final ActionHandlerFactory actionHandlerFactory;
@@ -34,14 +35,16 @@ public class ChargerWebSocketHandler extends TextWebSocketHandler {
         JsonNode root = objectMapper.readTree(message.getPayload());
 
         String action = root.path("action").asText();
+        String messageId = root.path("messageId").asText();
 
-        log.info("New message received from {} for action: {}", chargerId, action);
+        log.info("New message received from {} for action: {}. messageId: {}", chargerId, action, messageId);
 
         ActionHandler handler = actionHandlerFactory.getHandler(action);
 
         if (handler != null) {
-            String response = handler.handle(chargerId, root.path("payload"));
-            session.sendMessage(new TextMessage(response));
+            String actionStatus = handler.handle(chargerId, root.path("payload"));
+            TextMessage response = DataExchangeUtil.sendOcppResponse(action, messageId, actionStatus);
+            session.sendMessage(response);
         } else {
             session.sendMessage(new TextMessage("{\"status\": \"Error\", \"message\": \"Unsupported action\"}"));
         }
