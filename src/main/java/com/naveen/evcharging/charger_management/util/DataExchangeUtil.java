@@ -10,7 +10,7 @@ import org.springframework.web.socket.WebSocketSession;
 public class DataExchangeUtil {
 
     /**
-     * This is a Utils class. This cannot be instantiated. Hence making the constructor private.
+     * This is a Utils class. This cannot be instantiated. Hence, making the constructor private.
      */
     private DataExchangeUtil(){
 

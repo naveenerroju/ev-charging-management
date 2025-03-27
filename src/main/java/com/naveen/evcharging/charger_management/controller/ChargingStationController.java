@@ -1,6 +1,6 @@
 package com.naveen.evcharging.charger_management.controller;
 
-import com.naveen.evcharging.charger_management.entity.ChargingStation;
+import com.naveen.evcharging.charger_management.document.ChargingStation;
 import com.naveen.evcharging.charger_management.repository.ChargingStationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
