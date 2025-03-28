@@ -2,6 +2,7 @@ package com.naveen.evcharging.charger_management.websocket;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.naveen.evcharging.charger_management.cache.ChargingStationStatusCache;
 import com.naveen.evcharging.charger_management.exception.InvalidInputException;
 import com.naveen.evcharging.charger_management.exception.WebSocketExceptionHandler;
 import com.naveen.evcharging.charger_management.model.ServerResponse;
@@ -15,6 +16,7 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -28,10 +30,12 @@ public class ChargerWebSocketHandler extends TextWebSocketHandler {
     private final ActionHandlerFactory actionHandlerFactory;
     private final WebSocketExceptionHandler webSocketExceptionHandler;
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ChargingStationStatusCache statusCache;
 
-    public ChargerWebSocketHandler(ActionHandlerFactory actionHandlerFactory, WebSocketExceptionHandler webSocketExceptionHandler) {
+    public ChargerWebSocketHandler(ActionHandlerFactory actionHandlerFactory, WebSocketExceptionHandler webSocketExceptionHandler, ChargingStationStatusCache statusCache) {
         this.actionHandlerFactory = actionHandlerFactory;
         this.webSocketExceptionHandler = webSocketExceptionHandler;
+        this.statusCache = statusCache;
     }
 
     @Override
@@ -52,6 +56,8 @@ public class ChargerWebSocketHandler extends TextWebSocketHandler {
                 ServerResponse actionStatus = handler.handle(chargerId, root.path("payload"));
                 TextMessage response = DataExchangeUtil.sendOcppResponse(action, messageId, DataExchangeUtil.convertObjectToJsonString(actionStatus));
                 session.sendMessage(response);
+
+                statusCache.updateStatus(chargerId, LocalDateTime.now());
             } catch (InvalidInputException ex){
                 webSocketExceptionHandler.handleInvalidInputException(session, ex);
             } catch (RuntimeException ex){
