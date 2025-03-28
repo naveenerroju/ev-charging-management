@@ -1,8 +1,7 @@
 package com.naveen.evcharging.charger_management.controller;
 
-import com.naveen.evcharging.charger_management.document.ChargingStation;
-import com.naveen.evcharging.charger_management.repository.ChargingStationRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.naveen.evcharging.charger_management.model.ChargingStationsResponse;
+import com.naveen.evcharging.charger_management.service.ChargingStationsService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,17 +14,15 @@ import java.util.List;
 @RequestMapping("/internal/stations")
 public class ChargingStationController {
 
-    @Autowired
-    private ChargingStationRepository repository;
+    private final ChargingStationsService service;
 
-    @PostMapping()
-    public ChargingStation registerChargingStation(@RequestBody ChargingStation chargingStation){
-        return repository.save(chargingStation);
+    public ChargingStationController(ChargingStationsService service) {
+        this.service = service;
     }
 
     @GetMapping()
-    public List<ChargingStation> getAllRegisteredChargingStations(){
-        return repository.findAll();
+    public List<ChargingStationsResponse> getAllRegisteredChargingStations(){
+        return service.getStationsStatuses();
     }
 
 }
