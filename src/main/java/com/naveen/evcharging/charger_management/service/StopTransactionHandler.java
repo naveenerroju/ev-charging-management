@@ -9,29 +9,44 @@ import com.naveen.evcharging.charger_management.model.TransactionResponse;
 import com.naveen.evcharging.charger_management.repository.ChargingStationRepository;
 import com.naveen.evcharging.charger_management.repository.ChargingTransactionRepository;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DateTimeException;
 import java.time.LocalDateTime;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 @Service
-public class StartTransactionHandler implements ActionHandler{
+public class StopTransactionHandler implements ActionHandler{
 
     private final ChargingStationRepository chargingStationRepository;
     private final ChargingTransactionRepository chargingTransactionRepository;
 
-    public StartTransactionHandler(ChargingStationRepository chargingStationRepository, ChargingTransactionRepository chargingTransactionRepository) {
+    public StopTransactionHandler(ChargingStationRepository chargingStationRepository, ChargingTransactionRepository chargingTransactionRepository) {
         this.chargingStationRepository = chargingStationRepository;
         this.chargingTransactionRepository = chargingTransactionRepository;
     }
 
+    /**
+     *
+     * @param chargerId
+     * @param payload
+     * @return
+     */
     @Override
-    @Transactional
     public ServerResponse handle(String chargerId, JsonNode payload) {
+
+        Supplier<InvalidInputException> throwError = ()-> {
+            throw new InvalidInputException("There is no such value exist in Database");
+        };
+
+        String transactionId = payload.path("transactionId").asText(null);
+        if(transactionId==null || chargerId ==null){
+            throwError.get();
+        }
+
         String status = payload.path("status").asText(null);
-        String id = payload.path("id").asText(UUID.randomUUID().toString());
-        double energyConsumed = Double.parseDouble(payload.path("meterReading").asText("-1"));
+        double energyConsumed = Double.parseDouble(payload.path("meterReading").asText("0"));
+        double cost = Double.parseDouble(payload.path("cost").asText("0"));
         LocalDateTime timestamp;
 
         try{
@@ -41,27 +56,17 @@ public class StartTransactionHandler implements ActionHandler{
         }
 
         ChargingStation charger = chargingStationRepository.findById(chargerId).orElse(null);
-        if(charger!=null){
-            ChargingTransaction transaction = new ChargingTransaction();
-            transaction.setId(id);
+        ChargingTransaction transaction = chargingTransactionRepository.findById(transactionId).orElseThrow(throwError);
 
-            if(energyConsumed>=0){
-                transaction.setStartTime(timestamp);
-            }
-            transaction.setChargerId(chargerId);
-            transaction.setEnergyConsumed(energyConsumed);
-            transaction.setUpdatedAt(LocalDateTime.now());
-            transaction.setStatus("Processing");
+        charger.setStatus(status);
+        transaction.setUpdatedAt(timestamp);
+        transaction.setEnergyConsumed(energyConsumed);
+        transaction.setCost(cost);
+        transaction.setStatus("Completed");
 
-            charger.setStatus(status);
-            charger.setLastStatusNotification(timestamp);
+        chargingStationRepository.save(charger);
+        chargingTransactionRepository.save(transaction);
 
-            chargingStationRepository.save(charger);
-            chargingTransactionRepository.save(transaction);
-            return new TransactionResponse(id, "Accepted", LocalDateTime.now());
-        } else {
-            throw new InvalidInputException("Charger ID doesn't exist");
-        }
-
+        return new TransactionResponse(transactionId, "Accepted", LocalDateTime.now());
     }
 }

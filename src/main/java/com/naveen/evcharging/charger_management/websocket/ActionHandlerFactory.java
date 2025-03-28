@@ -13,12 +13,14 @@ public class ActionHandlerFactory {
     public ActionHandlerFactory(BootNotificationHandler bootNotificationHandler,
                                 HeartbeatHandler heartbeatHandler,
                                 StatusNotificationHandler statusNotificationHandler,
-                                StartTransactionHandler startTransactionHandler) {
+                                StartTransactionHandler startTransactionHandler,
+                                StopTransactionHandler stopTransactionHandler) {
         this.actionHandlers = Map.of(
                 "BootNotification", bootNotificationHandler,
                 "Heartbeat", heartbeatHandler,
                 "StatusNotification", statusNotificationHandler,
-                "StartTransaction", startTransactionHandler
+                "StartTransaction", startTransactionHandler,
+                "StopTransaction", stopTransactionHandler
         );
     }
 
