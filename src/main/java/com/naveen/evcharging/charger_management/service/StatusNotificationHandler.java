@@ -40,7 +40,6 @@ public class StatusNotificationHandler implements ActionHandler{
         } else {
             throw new InvalidInputException("Charger ID doesn't exist");
         }
-
     }
 
 }

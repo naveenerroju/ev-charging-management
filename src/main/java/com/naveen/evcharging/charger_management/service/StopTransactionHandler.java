@@ -10,10 +10,7 @@ import com.naveen.evcharging.charger_management.repository.ChargingStationReposi
 import com.naveen.evcharging.charger_management.repository.ChargingTransactionRepository;
 import org.springframework.stereotype.Service;
 
-import java.time.DateTimeException;
 import java.time.LocalDateTime;
-import java.util.UUID;
-import java.util.function.Supplier;
 
 @Service
 public class StopTransactionHandler extends TransactionHandler implements ActionHandler{
