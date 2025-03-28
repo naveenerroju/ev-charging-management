@@ -16,14 +16,10 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
-public class StartTransactionHandler implements ActionHandler{
-
-    private final ChargingStationRepository chargingStationRepository;
-    private final ChargingTransactionRepository chargingTransactionRepository;
+public class StartTransactionHandler extends TransactionHandler implements ActionHandler{
 
     public StartTransactionHandler(ChargingStationRepository chargingStationRepository, ChargingTransactionRepository chargingTransactionRepository) {
-        this.chargingStationRepository = chargingStationRepository;
-        this.chargingTransactionRepository = chargingTransactionRepository;
+        super(chargingStationRepository, chargingTransactionRepository);
     }
 
     @Override
@@ -31,37 +27,27 @@ public class StartTransactionHandler implements ActionHandler{
     public ServerResponse handle(String chargerId, JsonNode payload) {
         String status = payload.path("status").asText(null);
         String id = payload.path("id").asText(UUID.randomUUID().toString());
-        double energyConsumed = Double.parseDouble(payload.path("meterReading").asText("-1"));
-        LocalDateTime timestamp;
+        double energyConsumed = parseEnergyConsumed(payload);
+        LocalDateTime timestamp = parseTimestamp(payload);
 
-        try{
-            timestamp = LocalDateTime.parse(payload.path("timestamp").asText(null));
-        } catch (DateTimeException ex){
-            throw new InvalidInputException("timestamp is not in proper format. Provide ISO 8601 combined date and time representation");
+        ChargingStation charger = fetchChargingStation(chargerId);
+
+        ChargingTransaction transaction = new ChargingTransaction();
+        transaction.setId(id);
+
+        if (energyConsumed >= 0) {
+            transaction.setStartTime(timestamp);
         }
+        transaction.setChargerId(chargerId);
+        transaction.setEnergyConsumed(energyConsumed);
+        transaction.setUpdatedAt(LocalDateTime.now());
+        transaction.setStatus("Processing");
 
-        ChargingStation charger = chargingStationRepository.findById(chargerId).orElse(null);
-        if(charger!=null){
-            ChargingTransaction transaction = new ChargingTransaction();
-            transaction.setId(id);
+        charger.setStatus(status);
+        charger.setLastStatusNotification(timestamp);
 
-            if(energyConsumed>=0){
-                transaction.setStartTime(timestamp);
-            }
-            transaction.setChargerId(chargerId);
-            transaction.setEnergyConsumed(energyConsumed);
-            transaction.setUpdatedAt(LocalDateTime.now());
-            transaction.setStatus("Processing");
+        saveChargingEntities(charger, transaction);
 
-            charger.setStatus(status);
-            charger.setLastStatusNotification(timestamp);
-
-            chargingStationRepository.save(charger);
-            chargingTransactionRepository.save(transaction);
-            return new TransactionResponse(id, "Accepted", LocalDateTime.now());
-        } else {
-            throw new InvalidInputException("Charger ID doesn't exist");
-        }
-
+        return new TransactionResponse(id, "Accepted", LocalDateTime.now());
     }
 }

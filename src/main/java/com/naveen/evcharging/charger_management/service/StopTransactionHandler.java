@@ -16,14 +16,10 @@ import java.util.UUID;
 import java.util.function.Supplier;
 
 @Service
-public class StopTransactionHandler implements ActionHandler{
-
-    private final ChargingStationRepository chargingStationRepository;
-    private final ChargingTransactionRepository chargingTransactionRepository;
+public class StopTransactionHandler extends TransactionHandler implements ActionHandler{
 
     public StopTransactionHandler(ChargingStationRepository chargingStationRepository, ChargingTransactionRepository chargingTransactionRepository) {
-        this.chargingStationRepository = chargingStationRepository;
-        this.chargingTransactionRepository = chargingTransactionRepository;
+        super(chargingStationRepository, chargingTransactionRepository);
     }
 
     /**
@@ -35,28 +31,18 @@ public class StopTransactionHandler implements ActionHandler{
     @Override
     public ServerResponse handle(String chargerId, JsonNode payload) {
 
-        Supplier<InvalidInputException> throwError = ()-> {
-            throw new InvalidInputException("There is no such value exist in Database");
-        };
-
         String transactionId = payload.path("transactionId").asText(null);
-        if(transactionId==null || chargerId ==null){
-            throwError.get();
+        if (transactionId == null || chargerId == null) {
+            throw new InvalidInputException("TransactionId and ChargerId are required");
         }
 
         String status = payload.path("status").asText(null);
-        double energyConsumed = Double.parseDouble(payload.path("meterReading").asText("0"));
+        double energyConsumed = parseEnergyConsumed(payload);
         double cost = Double.parseDouble(payload.path("cost").asText("0"));
-        LocalDateTime timestamp;
+        LocalDateTime timestamp = parseTimestamp(payload);
 
-        try{
-            timestamp = LocalDateTime.parse(payload.path("timestamp").asText(null));
-        } catch (DateTimeException ex){
-            throw new InvalidInputException("timestamp is not in proper format. Provide ISO 8601 combined date and time representation");
-        }
-
-        ChargingStation charger = chargingStationRepository.findById(chargerId).orElse(null);
-        ChargingTransaction transaction = chargingTransactionRepository.findById(transactionId).orElseThrow(throwError);
+        ChargingStation charger = fetchChargingStation(chargerId);
+        ChargingTransaction transaction = fetchChargingTransaction(transactionId);
 
         charger.setStatus(status);
         transaction.setUpdatedAt(timestamp);
@@ -64,8 +50,7 @@ public class StopTransactionHandler implements ActionHandler{
         transaction.setCost(cost);
         transaction.setStatus("Completed");
 
-        chargingStationRepository.save(charger);
-        chargingTransactionRepository.save(transaction);
+        saveChargingEntities(charger, transaction);
 
         return new TransactionResponse(transactionId, "Accepted", LocalDateTime.now());
     }
