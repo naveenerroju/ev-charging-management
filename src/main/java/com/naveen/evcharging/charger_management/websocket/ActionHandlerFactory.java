@@ -1,9 +1,6 @@
 package com.naveen.evcharging.charger_management.websocket;
 
-import com.naveen.evcharging.charger_management.service.ActionHandler;
-import com.naveen.evcharging.charger_management.service.BootNotificationHandler;
-import com.naveen.evcharging.charger_management.service.HeartbeatHandler;
-import com.naveen.evcharging.charger_management.service.StatusNotificationHandler;
+import com.naveen.evcharging.charger_management.service.*;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -15,11 +12,15 @@ public class ActionHandlerFactory {
 
     public ActionHandlerFactory(BootNotificationHandler bootNotificationHandler,
                                 HeartbeatHandler heartbeatHandler,
-                                StatusNotificationHandler statusNotificationHandler) {
+                                StatusNotificationHandler statusNotificationHandler,
+                                StartTransactionHandler startTransactionHandler,
+                                StopTransactionHandler stopTransactionHandler) {
         this.actionHandlers = Map.of(
                 "BootNotification", bootNotificationHandler,
                 "Heartbeat", heartbeatHandler,
-                "StatusNotification", statusNotificationHandler
+                "StatusNotification", statusNotificationHandler,
+                "StartTransaction", startTransactionHandler,
+                "StopTransaction", stopTransactionHandler
         );
     }
 

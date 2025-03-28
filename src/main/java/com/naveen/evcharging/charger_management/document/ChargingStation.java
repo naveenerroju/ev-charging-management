@@ -1,4 +1,4 @@
-package com.naveen.evcharging.charger_management.entity;
+package com.naveen.evcharging.charger_management.document;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

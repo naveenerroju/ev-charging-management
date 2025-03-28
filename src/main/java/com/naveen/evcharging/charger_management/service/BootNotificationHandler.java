@@ -2,7 +2,7 @@ package com.naveen.evcharging.charger_management.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.naveen.evcharging.charger_management.entity.ChargingStation;
+import com.naveen.evcharging.charger_management.document.ChargingStation;
 import com.naveen.evcharging.charger_management.exception.InvalidInputException;
 import com.naveen.evcharging.charger_management.model.ServerResponse;
 import com.naveen.evcharging.charger_management.repository.ChargingStationRepository;
