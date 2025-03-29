@@ -24,10 +24,11 @@ public class HeartbeatHandler implements ActionHandler{
         if (charger != null) {
             // Update the heartbeat timestamp
             charger.setLastHeartbeat(java.time.LocalDateTime.now());
+            charger.setStatus("Available");
             chargerRepository.save(charger);
 
             // Return the response in OCPP 1.6 format
-            return new ServerResponse("Accepted", LocalDateTime.now());
+            return new ServerResponse("Accepted");
         } else {
             throw new InvalidInputException("Charger ID doesn't exist");
         }

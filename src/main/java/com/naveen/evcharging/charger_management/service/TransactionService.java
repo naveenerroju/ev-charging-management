@@ -22,7 +22,7 @@ public class TransactionService {
 
         transactionRepository.findByStartTimeBetween(startTime, endTime).forEach(
                         (transaction) -> responses.add(
-                                new TransactionResponse(transaction.getId(), transaction.getStatus(), transaction.getEndTime())
+                                new TransactionResponse(transaction.getId(), transaction.getStatus())
                         ));
 
         return responses;

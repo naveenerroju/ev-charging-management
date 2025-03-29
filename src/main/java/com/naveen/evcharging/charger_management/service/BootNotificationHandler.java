@@ -49,6 +49,6 @@ public class BootNotificationHandler implements ActionHandler{
         chargerRepository.save(charger);
 
         // Return the OCPP formatted response
-        return new ServerResponse("Accepted", LocalDateTime.now());
+        return new ServerResponse("Accepted");
     }
 }

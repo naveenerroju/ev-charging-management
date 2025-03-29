@@ -36,7 +36,7 @@ public class StatusNotificationHandler implements ActionHandler{
             charger.setStatus(status);
             charger.setLastStatusNotification(timestamp);
             chargingStationRepository.save(charger);
-            return new ServerResponse("Accepted", LocalDateTime.now());
+            return new ServerResponse("Accepted");
         } else {
             throw new InvalidInputException("Charger ID doesn't exist");
         }
