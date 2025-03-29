@@ -48,6 +48,6 @@ public class StartTransactionHandler extends TransactionHandler implements Actio
 
         saveChargingEntities(charger, transaction);
 
-        return new TransactionResponse(id, "Accepted", LocalDateTime.now());
+        return new TransactionResponse(id, "Accepted");
     }
 }

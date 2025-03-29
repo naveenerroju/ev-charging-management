@@ -23,11 +23,11 @@ public class ChargingStationStatusMonitor {
         this.stationRepository = stationRepository;
     }
 
-    @Scheduled(cron = "0 */5 * * * *") //cron for 5 minutes
+    @Scheduled(cron = "0 */2 * * * *") //cron for 5 minutes
     public void surveyStations(){
         log.error("Executing scheduler");
 
-        long cutofftime = 5; //in minutes
+        long cutofftime = 2; //in minutes
         LocalDateTime cutOffTime = LocalDateTime.now().minusMinutes(cutofftime);
         ConcurrentMap<String, LocalDateTime> unavailableStations = statusCache.getChargersToMarkUnavailable(cutOffTime);
         log.info("{} charging stations are now unavailable.",unavailableStations.size());

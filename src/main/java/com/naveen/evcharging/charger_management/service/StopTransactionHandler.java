@@ -49,6 +49,6 @@ public class StopTransactionHandler extends TransactionHandler implements Action
 
         saveChargingEntities(charger, transaction);
 
-        return new TransactionResponse(transactionId, "Accepted", LocalDateTime.now());
+        return new TransactionResponse(transactionId, "Accepted");
     }
 }

@@ -14,9 +14,8 @@ import java.time.LocalDateTime;
 public class TransactionResponse extends ServerResponse{
     private String transactionId;
 
-    public TransactionResponse(String transactionId, String status, LocalDateTime timestamp) {
+    public TransactionResponse(String transactionId, String status) {
         this.transactionId=transactionId;
         super.setStatus(status);
-        super.setCurrentTime(timestamp);
     }
 }
