@@ -14,7 +14,9 @@ This project is an **EV Charger Management System** that allows you to manage ch
 - **REST API Endpoints**:
     - **Get Transactions within a Time Range**: Retrieve transactions within a specified time range.
     - **Get All Charging Stations**: Retrieve the list of all charging stations with their statuses.
-
+- **Scheduler**:
+    - A scheduled task runs every 5 minutes to check whether any charger has failed to send an update within the last 5 minutes. If no update is received, the charger is marked as Unavailable.
+  
 ## Prerequisites
 
 - **Java 17 or higher**
@@ -231,6 +233,8 @@ GET http://localhost:8080/internal/stations
     }
 ]
 ```
+#### **Scheduler:**  Charger Status Check 
+A scheduler runs every 5 minutes to check whether any charger has failed to send an update within the last 5 minutes. If no update is received, the charger is marked as Unavailable.
 
 ---
 
